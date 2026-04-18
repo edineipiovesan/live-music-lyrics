@@ -3,6 +3,8 @@ import re
 
 import requests
 
+import config
+
 log = logging.getLogger(__name__)
 
 LRCLIB_SEARCH_URL = "https://lrclib.net/api/search"
@@ -15,7 +17,7 @@ def fetch_lrc(title: str, artist: str) -> str | None:
         resp = requests.get(
             LRCLIB_SEARCH_URL,
             params={"track_name": title, "artist_name": artist},
-            timeout=10,
+            timeout=config.LYRICS_TIMEOUT,
         )
         results = resp.json()
         log.debug("lrclib returned %d result(s)", len(results))

@@ -2,6 +2,8 @@ import logging
 
 import requests
 
+import config
+
 log = logging.getLogger(__name__)
 
 ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
@@ -18,7 +20,7 @@ def fetch_album_info(title: str, artist: str) -> dict:
         resp = requests.get(
             ITUNES_SEARCH_URL,
             params={"term": f"{artist} {title}", "entity": "song", "limit": 5},
-            timeout=10,
+            timeout=config.ALBUM_TIMEOUT,
         )
         data = resp.json()
         results = data.get("results", [])

@@ -8,11 +8,13 @@ import wave
 import numpy as np
 import sounddevice as sd
 
+import config
+
 log = logging.getLogger(__name__)
 
-SAMPLE_RATE = 16000
-CHANNELS = 1
-CHUNK_DURATION_S = 5
+SAMPLE_RATE      = config.SAMPLE_RATE
+CHANNELS         = 1
+CHUNK_DURATION_S = config.CHUNK_DURATION_S
 
 
 def _frames_to_wav(frames: list, sample_rate: int) -> bytes:

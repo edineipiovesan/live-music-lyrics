@@ -97,9 +97,14 @@ pip install -r requirements.txt
 
 ### Configure
 
+Copy `.env` and set your AudD key:
+
 ```bash
-export AUDD_API_KEY=your_key_here
+cp .env .env.local   # optional — or just edit .env directly
+# set AUDD_API_KEY=your_key_here
 ```
+
+Variables in `.env` are loaded automatically at startup. Shell environment variables always take precedence.
 
 ### Run
 
@@ -113,9 +118,26 @@ The browser opens automatically at `http://localhost:8000`. Logs stream to stdou
 
 ## Environment variables
 
-| Variable | Required | Description |
+All settings have defaults except `AUDD_API_KEY`. The `.env` file in the repo root contains every variable with its default value and a description.
+
+| Variable | Default | Description |
 |-|-|-|
-| `AUDD_API_KEY` | Yes | AudD API key — get one free at dashboard.audd.io |
+| `AUDD_API_KEY` | — | **Required.** AudD API key — get one free at [dashboard.audd.io](https://dashboard.audd.io/) |
+| `HOST` | `0.0.0.0` | Interface the web server binds to |
+| `PORT` | `8000` | Port the web server listens on |
+| `LOG_LEVEL` | `INFO` | App log level: `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` |
+| `OPEN_BROWSER` | `true` | Auto-open browser on startup (`true`/`false`) |
+| `SAMPLE_RATE` | `16000` | Microphone sample rate in Hz |
+| `CHUNK_DURATION_S` | `5` | Seconds of audio per recognition attempt |
+| `AUDIO_QUEUE_SIZE` | `10` | Max buffered audio chunks before drops |
+| `LISTEN_BEFORE_END_S` | `5` | Seconds before song end to start listening for next track |
+| `FALLBACK_INTERVAL_S` | `30` | Re-check interval (s) when song duration is unknown |
+| `HISTORY_MAX` | `20` | Max entries in the Recently Played list |
+| `FACT_ROTATION_S` | `9` | Seconds each fact is shown before rotating to the next |
+| `AUDD_TIMEOUT` | `15` | HTTP timeout (s) for AudD API calls |
+| `LYRICS_TIMEOUT` | `10` | HTTP timeout (s) for lrclib.net calls |
+| `ALBUM_TIMEOUT` | `10` | HTTP timeout (s) for iTunes Search API calls |
+| `FACTS_TIMEOUT` | `8` | HTTP timeout (s) for Wikipedia API calls |
 
 ---
 

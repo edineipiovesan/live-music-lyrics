@@ -188,10 +188,56 @@
       font-size: 0.78rem;
       color: var(--dim2);
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: 16px;
       overflow-wrap: break-word;
       word-break: break-word;
       line-height: 1.4;
+    }
+
+    /* ── Facts section ── */
+    #facts-section {
+      display: none;
+      margin-bottom: 20px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      /* Reserve height so the card doesn't jump when text changes */
+      min-height: 72px;
+    }
+
+    #facts-label {
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim2);
+      margin-bottom: 6px;
+    }
+
+    #fact-text {
+      font-size: 0.79rem;
+      color: var(--dim1);
+      line-height: 1.55;
+      will-change: transform, opacity, filter;
+    }
+
+    @keyframes fact-exit {
+      from { opacity: 1; transform: translateY(0);    filter: blur(0px); }
+      to   { opacity: 0; transform: translateY(-10px); filter: blur(4px); }
+    }
+
+    @keyframes fact-enter {
+      from { opacity: 0; transform: translateY(10px);  filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0);     filter: blur(0px); }
+    }
+
+    #fact-text.fact-exiting {
+      animation: fact-exit 0.35s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+    #fact-text.fact-entering {
+      animation: fact-enter 0.5s cubic-bezier(0, 0, 0.2, 1) forwards;
     }
 
     /* ── Album info section ── */
@@ -503,6 +549,11 @@
         <div id="song-title">—</div>
         <div id="artist-name">—</div>
         <div id="album-line"></div>
+
+        <div id="facts-section">
+          <div id="facts-label">Did you know</div>
+          <p id="fact-text"></p>
+        </div>
       </div>
 
       <!-- Fixed bottom -->
@@ -725,13 +776,65 @@
       img.src = url;
     }
 
+    /* ── Facts rotation ── */
+    const factsSectionEl = document.getElementById('facts-section');
+    const factTextEl     = document.getElementById('fact-text');
+    let currentFactsJson = '';
+    let facts            = [];
+    let factIdx          = 0;
+    let factTimer        = null;
+
+    function showFact(idx) {
+      // Exit animation — swap content when it finishes, then enter
+      factTextEl.classList.remove('fact-entering');
+      factTextEl.classList.add('fact-exiting');
+      factTextEl.addEventListener('animationend', () => {
+        factTextEl.classList.remove('fact-exiting');
+        factTextEl.textContent = facts[idx] || '';
+        // Trigger reflow so the enter animation starts fresh
+        void factTextEl.offsetWidth;
+        factTextEl.classList.add('fact-entering');
+        factTextEl.addEventListener('animationend', () => {
+          factTextEl.classList.remove('fact-entering');
+        }, { once: true });
+      }, { once: true });
+    }
+
+    function startFactRotation(newFacts, intervalMs) {
+      if (factTimer) { clearInterval(factTimer); factTimer = null; }
+      facts   = newFacts;
+      factIdx = 0;
+      if (!facts.length) { factsSectionEl.style.display = 'none'; return; }
+      // Show first fact with enter animation
+      factTextEl.classList.remove('fact-exiting', 'fact-entering');
+      factTextEl.textContent = facts[0];
+      void factTextEl.offsetWidth;
+      factTextEl.classList.add('fact-entering');
+      factTextEl.addEventListener('animationend', () => {
+        factTextEl.classList.remove('fact-entering');
+      }, { once: true });
+      factsSectionEl.style.display = 'block';
+      if (facts.length > 1) {
+        factTimer = setInterval(() => {
+          factIdx = (factIdx + 1) % facts.length;
+          showFact(factIdx);
+        }, intervalMs);
+      }
+    }
+
     /* ── WebSocket state ── */
     let currentSong = '';
 
     function applyState(msg) {
-      const { lineIndex, song, artist, album, year, genre, trackCount, artworkUrl, lyrics, history } = msg;
+      const { lineIndex, song, artist, album, year, genre, trackCount, artworkUrl, lyrics, facts: newFacts, factRotationS, history } = msg;
 
       renderHistory(history || []);
+
+      const factsJson = JSON.stringify(newFacts || []);
+      if (factsJson !== currentFactsJson) {
+        currentFactsJson = factsJson;
+        startFactRotation(newFacts || [], (factRotationS || 9) * 1000);
+      }
 
       if (song && song !== currentSong) {
         currentSong = song;

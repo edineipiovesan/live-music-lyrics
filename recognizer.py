@@ -5,15 +5,13 @@ import time
 
 import requests
 
+import config
+
 log = logging.getLogger(__name__)
 
-AUDD_URL = "https://api.audd.io/"
-
-# How many seconds before song end to start listening for the next track
-LISTEN_BEFORE_END_S = 5
-
-# Fallback re-check interval when song duration is unknown
-FALLBACK_INTERVAL_S = 30
+AUDD_URL            = "https://api.audd.io/"
+LISTEN_BEFORE_END_S = config.LISTEN_BEFORE_END_S
+FALLBACK_INTERVAL_S = config.FALLBACK_INTERVAL_S
 
 
 def _parse_timecode(tc_field) -> float:
@@ -55,7 +53,7 @@ def recognize(wav_bytes: bytes, api_key: str, chunk_start_time: float, chunk_end
             AUDD_URL,
             data={"api_token": api_key, "return": "timecode"},
             files={"file": ("audio.wav", wav_bytes, "audio/wav")},
-            timeout=15,
+            timeout=config.AUDD_TIMEOUT,
         )
         response_time = time.monotonic()
         data = resp.json()

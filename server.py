@@ -8,7 +8,9 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import config
 from album_info import fetch_album_info
+from facts import fetch_facts
 from lyrics import fetch_lrc, parse_lrc
 from tracker import PlaybackTracker
 
@@ -35,10 +37,11 @@ state: dict = {
     "artworkUrl": "",
     "duration_s": 0.0,       # song duration from iTunes, read by RecognitionLoop
     "pending_recognition": None,
+    "facts": [],             # Wikipedia facts about the artist
     "history": [],           # list of {title, artist, album, artworkUrl, playedAt}
 }
 
-HISTORY_MAX = 20
+HISTORY_MAX = config.HISTORY_MAX
 
 
 @app.get("/")
@@ -92,10 +95,11 @@ async def _apply_pending_recognition():
             state["history"] = state["history"][:HISTORY_MAX]
             log.info("Added %r to history (%d entries)", entry["title"], len(state["history"]))
 
-        # Run both blocking HTTP calls concurrently in thread pool
-        lrc, album_info = await asyncio.gather(
+        # Run all blocking HTTP calls concurrently in thread pool
+        lrc, album_info, facts = await asyncio.gather(
             asyncio.to_thread(fetch_lrc, title, artist),
             asyncio.to_thread(fetch_album_info, title, artist),
+            asyncio.to_thread(fetch_facts, artist, title),
         )
 
         parsed = parse_lrc(lrc) if lrc else []
@@ -110,7 +114,8 @@ async def _apply_pending_recognition():
         state["trackCount"] = album_info.get("trackCount", 0)
         state["artworkUrl"] = album_info.get("artworkUrl", "")
         state["duration_s"] = album_info.get("duration_s", 0.0)
-        log.info("Song duration: %.0fs", state["duration_s"])
+        state["facts"] = facts
+        log.info("Song duration: %.0fs, facts: %d", state["duration_s"], len(facts))
     else:
         log.info("Re-syncing existing song %r at offset %.1fs", title, timecode_s)
 
@@ -131,6 +136,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             msg = {
                 "lineIndex": line_index,
+                "factRotationS": config.FACT_ROTATION_S,
                 "song": state["song"],
                 "artist": state["artist"],
                 "album": state["album"],
@@ -139,6 +145,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "trackCount": state["trackCount"],
                 "artworkUrl": state["artworkUrl"],
                 "lyrics": lyrics,
+                "facts": state["facts"],
                 "history": state["history"],
             }
             await websocket.send_text(json.dumps(msg))
