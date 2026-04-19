@@ -1,9 +1,8 @@
 import logging
 import re
 
-import requests
-
 from . import config
+from .http_client import http_get
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +13,7 @@ def fetch_lrc(title: str, artist: str) -> str | None:
     """Search lrclib.net and return raw LRC text for the first match with synced lyrics."""
     log.info("Fetching lyrics for %r by %r from lrclib.net...", title, artist)
     try:
-        resp = requests.get(
+        resp = http_get(
             LRCLIB_SEARCH_URL,
             params={"track_name": title, "artist_name": artist},
             timeout=config.LYRICS_TIMEOUT,

@@ -6,6 +6,7 @@ import time
 import requests
 
 from . import config
+from .http_client import http_post
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def recognize(wav_bytes: bytes, api_key: str, chunk_start_time: float, chunk_end
     """
     log.info("Sending %.1f KB audio to AudD...", len(wav_bytes) / 1024)
     try:
-        resp = requests.post(
+        resp = http_post(
             AUDD_URL,
             data={"api_token": api_key, "return": "timecode"},
             files={"file": ("audio.wav", wav_bytes, "audio/wav")},

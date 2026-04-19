@@ -2,9 +2,8 @@ import logging
 import random
 import re
 
-import requests
-
 from . import config
+from .http_client import http_get
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ def _wiki_sentences(query: str) -> list[str]:
     """Search Wikipedia, fetch the intro extract, return shuffled body sentences."""
     try:
         # Step 1: find the best-matching page title
-        search_resp = requests.get(
+        search_resp = http_get(
             WIKI_API_URL,
             params={
                 "action": "query",
@@ -53,7 +52,7 @@ def _wiki_sentences(query: str) -> list[str]:
         log.info("Wikipedia: fetching extract for %r (query: %r)", page_title, query)
 
         # Step 2: fetch the full intro section as plain text
-        extract_resp = requests.get(
+        extract_resp = http_get(
             WIKI_API_URL,
             params={
                 "action": "query",

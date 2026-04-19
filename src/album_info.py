@@ -1,8 +1,7 @@
 import logging
 
-import requests
-
 from . import config
+from .http_client import http_get
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ def fetch_album_info(title: str, artist: str) -> dict:
     """
     log.info("Fetching album info from iTunes for %r by %r", title, artist)
     try:
-        resp = requests.get(
+        resp = http_get(
             ITUNES_SEARCH_URL,
             params={"term": f"{artist} {title}", "entity": "song", "limit": 5},
             timeout=config.ALBUM_TIMEOUT,
