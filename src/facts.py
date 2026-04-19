@@ -8,9 +8,7 @@ from .http_client import http_get
 log = logging.getLogger(__name__)
 
 WIKI_API_URL = "https://en.wikipedia.org/w/api.php"
-HEADERS = {
-    "User-Agent": "live-music-lyrics/1.0 (https://github.com/local/live-music-lyrics; contact@example.com)"
-}
+HEADERS = {"User-Agent": "live-music-lyrics/1.0 (https://github.com/local/live-music-lyrics; contact@example.com)"}
 
 
 def fetch_facts(artist: str, title: str) -> list[str]:
@@ -57,8 +55,8 @@ def _wiki_sentences(query: str) -> list[str]:
             params={
                 "action": "query",
                 "prop": "extracts",
-                "exintro": True,       # intro section only (before first heading)
-                "explaintext": True,   # plain text, no wiki markup
+                "exintro": True,  # intro section only (before first heading)
+                "explaintext": True,  # plain text, no wiki markup
                 "titles": page_title,
                 "format": "json",
                 "formatversion": "2",

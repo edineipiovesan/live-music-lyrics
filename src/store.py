@@ -1,4 +1,5 @@
 """Persistent play history backed by a local SQLite database."""
+
 import logging
 import sqlite3
 from datetime import datetime, timezone
@@ -59,11 +60,11 @@ def load_history(limit: int = 20) -> list[dict]:
         conn.close()
         return [
             {
-                "title":      row["title"],
-                "artist":     row["artist"],
-                "album":      row["album"],
+                "title": row["title"],
+                "artist": row["artist"],
+                "album": row["album"],
                 "artworkUrl": row["artwork_url"],
-                "playedAt":   row["played_at"],
+                "playedAt": row["played_at"],
             }
             for row in rows
         ]

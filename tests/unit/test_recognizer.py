@@ -11,6 +11,7 @@ from tests.conftest import stub
 # _parse_timecode  (pure — no network, no WireMock)
 # ---------------------------------------------------------------------------
 
+
 def test_parse_timecode_none():
     assert _parse_timecode(None) == 0.0
 
@@ -51,27 +52,34 @@ def test_parse_timecode_non_numeric():
 # recognize() via WireMock — needs patch_api_urls + clean_wiremock
 # ---------------------------------------------------------------------------
 
+
 def _audd_stub(base_url, response_body, status=200):
-    stub(base_url, {
-        "request": {"method": "POST", "urlPath": "/__audd__"},
-        "response": {
-            "status": status,
-            "headers": {"Content-Type": "application/json"},
-            "jsonBody": response_body,
+    stub(
+        base_url,
+        {
+            "request": {"method": "POST", "urlPath": "/__audd__"},
+            "response": {
+                "status": status,
+                "headers": {"Content-Type": "application/json"},
+                "jsonBody": response_body,
+            },
         },
-    })
+    )
 
 
 def test_recognize_success(wiremock_base_url, patch_api_urls, clean_wiremock):
-    _audd_stub(wiremock_base_url, {
-        "status": "success",
-        "result": {
-            "title": "Come Together",
-            "artist": "The Beatles",
-            "album": "Abbey Road",
-            "timecode": "1:23",
+    _audd_stub(
+        wiremock_base_url,
+        {
+            "status": "success",
+            "result": {
+                "title": "Come Together",
+                "artist": "The Beatles",
+                "album": "Abbey Road",
+                "timecode": "1:23",
+            },
         },
-    })
+    )
     result = recognize(b"fake_wav", "test-key", 1.0, 2.0)
     assert result is not None
     assert result["title"] == "Come Together"
@@ -102,18 +110,24 @@ def test_recognize_network_error(monkeypatch):
 
 
 def test_recognize_json_parse_error(wiremock_base_url, patch_api_urls, clean_wiremock):
-    stub(wiremock_base_url, {
-        "request": {"method": "POST", "urlPath": "/__audd__"},
-        "response": {"status": 200, "body": "not valid json{{{{"},
-    })
+    stub(
+        wiremock_base_url,
+        {
+            "request": {"method": "POST", "urlPath": "/__audd__"},
+            "response": {"status": 200, "body": "not valid json{{{{"},
+        },
+    )
     assert recognize(b"fake_wav", "test-key", 1.0, 2.0) is None
 
 
 def test_recognize_default_unknown_fields(wiremock_base_url, patch_api_urls, clean_wiremock):
-    _audd_stub(wiremock_base_url, {
-        "status": "success",
-        "result": {"timecode": "0:10"},
-    })
+    _audd_stub(
+        wiremock_base_url,
+        {
+            "status": "success",
+            "result": {"timecode": "0:10"},
+        },
+    )
     result = recognize(b"fake_wav", "test-key", 1.0, 2.0)
     assert result["title"] == "Unknown"
     assert result["artist"] == "Unknown"
@@ -123,6 +137,7 @@ def test_recognize_default_unknown_fields(wiremock_base_url, patch_api_urls, cle
 # ---------------------------------------------------------------------------
 # RecognitionLoop methods  (pure — no network)
 # ---------------------------------------------------------------------------
+
 
 def _make_loop(state=None):
     q = queue.Queue()
@@ -167,18 +182,17 @@ def test_next_fresh_chunk_returns_item():
 # _sleep_until_near_end
 # ---------------------------------------------------------------------------
 
+
 def test_sleep_until_near_end_known_duration_natural_wake():
     loop, _ = _make_loop({"duration_s": 60.0})
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait", return_value=False):
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait", return_value=False):
         loop._sleep_until_near_end(0.0)
 
 
 def test_sleep_until_near_end_trigger_now_returns():
     loop, _ = _make_loop({"duration_s": 60.0})
     loop._seek_position = None
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait", return_value=True):
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait", return_value=True):
         loop._sleep_until_near_end(0.0)
 
 
@@ -193,8 +207,7 @@ def test_sleep_until_near_end_seek_recalculates():
             return True
         return False
 
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait", side_effect=mock_wait):
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait", side_effect=mock_wait):
         loop._sleep_until_near_end(0.0)
 
     assert call_count[0] == 2
@@ -202,16 +215,14 @@ def test_sleep_until_near_end_seek_recalculates():
 
 def test_sleep_until_near_end_near_end_returns_immediately():
     loop, _ = _make_loop({"duration_s": 10.0})
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait") as mock_wait:
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait") as mock_wait:
         loop._sleep_until_near_end(9.5)
         mock_wait.assert_not_called()
 
 
 def test_sleep_until_near_end_unknown_duration_fallback():
     loop, _ = _make_loop({"duration_s": 0.0})
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait", return_value=False):
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait", return_value=False):
         loop._sleep_until_near_end(0.0)
 
 
@@ -226,8 +237,7 @@ def test_sleep_until_near_end_fallback_with_seek():
             return True
         return False
 
-    with patch("time.sleep"), \
-         patch.object(loop._skip_event, "wait", side_effect=mock_wait):
+    with patch("time.sleep"), patch.object(loop._skip_event, "wait", side_effect=mock_wait):
         loop._sleep_until_near_end(0.0)
 
 
@@ -235,9 +245,11 @@ def test_sleep_until_near_end_fallback_with_seek():
 # _sleep_rate_limited
 # ---------------------------------------------------------------------------
 
+
 def test_sleep_rate_limited_sets_and_clears_state():
     loop, _ = _make_loop()
     import src.recognizer as rec_mod
+
     original_backoff = rec_mod.AUDD_BACKOFF_S
     rec_mod.AUDD_BACKOFF_S = 2
     try:
@@ -258,6 +270,7 @@ def test_sleep_rate_limited_exposes_deadline_in_state():
         return False
 
     import src.recognizer as rec_mod
+
     original = rec_mod.AUDD_BACKOFF_S
     rec_mod.AUDD_BACKOFF_S = 1
     try:
@@ -273,6 +286,7 @@ def test_sleep_rate_limited_exposes_deadline_in_state():
 # RecognitionLoop.run()
 # ---------------------------------------------------------------------------
 
+
 def test_run_stores_pending_recognition():
     q = queue.Queue()
     q.put((b"wav", 1.0, 2.0))
@@ -280,12 +294,18 @@ def test_run_stores_pending_recognition():
     loop = RecognitionLoop(q, "key", state)
 
     recognition_result = {
-        "title": "Song", "artist": "Artist", "album": "", "timecode_s": 10.0, "ref_time": 2.0,
+        "title": "Song",
+        "artist": "Artist",
+        "album": "",
+        "timecode_s": 10.0,
+        "ref_time": 2.0,
     }
 
-    with patch("src.recognizer.recognize", return_value=recognition_result), \
-         patch.object(loop, "_drain_queue"), \
-         patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration):
+    with (
+        patch("src.recognizer.recognize", return_value=recognition_result),
+        patch.object(loop, "_drain_queue"),
+        patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration),
+    ):
         with pytest.raises(StopIteration):
             loop.run()
 
@@ -305,9 +325,11 @@ def test_run_retries_on_no_recognition():
         call_count[0] += 1
         return None if call_count[0] == 1 else recognition_result
 
-    with patch("src.recognizer.recognize", side_effect=mock_recognize), \
-         patch.object(loop, "_drain_queue"), \
-         patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration):
+    with (
+        patch("src.recognizer.recognize", side_effect=mock_recognize),
+        patch.object(loop, "_drain_queue"),
+        patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration),
+    ):
         with pytest.raises(StopIteration):
             loop.run()
 
@@ -327,10 +349,12 @@ def test_run_calls_sleep_rate_limited_on_quota():
         call_count[0] += 1
         return _QUOTA_EXCEEDED if call_count[0] == 1 else recognition_result
 
-    with patch("src.recognizer.recognize", side_effect=mock_recognize), \
-         patch.object(loop, "_drain_queue"), \
-         patch.object(loop, "_sleep_rate_limited") as mock_backoff, \
-         patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration):
+    with (
+        patch("src.recognizer.recognize", side_effect=mock_recognize),
+        patch.object(loop, "_drain_queue"),
+        patch.object(loop, "_sleep_rate_limited") as mock_backoff,
+        patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration),
+    ):
         with pytest.raises(StopIteration):
             loop.run()
 

@@ -1,4 +1,5 @@
 """Tests for src/store.py — SQLite play history."""
+
 import os
 
 import pytest
@@ -18,6 +19,7 @@ def tmp_db(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # record_play
 # ---------------------------------------------------------------------------
+
 
 def test_record_play_creates_entry():
     record_play("Come Together", "The Beatles", "Abbey Road", "http://art.example.com/1.jpg")
@@ -47,6 +49,7 @@ def test_record_play_creates_db_directory(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # load_history
 # ---------------------------------------------------------------------------
+
 
 def test_load_history_returns_empty_when_no_plays():
     assert load_history() == []

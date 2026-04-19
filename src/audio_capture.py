@@ -12,8 +12,8 @@ from . import config
 
 log = logging.getLogger(__name__)
 
-SAMPLE_RATE      = config.SAMPLE_RATE
-CHANNELS         = 1
+SAMPLE_RATE = config.SAMPLE_RATE
+CHANNELS = 1
 CHUNK_DURATION_S = config.CHUNK_DURATION_S
 
 
@@ -55,9 +55,12 @@ class AudioCapture:
                 try:
                     chunk_end = time.monotonic()
                     self._queue.put_nowait((wav, chunk_start, chunk_end))
-                    log.info("Audio chunk #%d captured (%.1f KB, duration %.1fs)",
-                             self._chunk_count, len(wav) / 1024,
-                             chunk_end - chunk_start)
+                    log.info(
+                        "Audio chunk #%d captured (%.1f KB, duration %.1fs)",
+                        self._chunk_count,
+                        len(wav) / 1024,
+                        chunk_end - chunk_start,
+                    )
                 except queue.Full:
                     log.warning("Audio queue full — dropping chunk #%d", self._chunk_count)
 

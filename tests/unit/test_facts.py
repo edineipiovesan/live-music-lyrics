@@ -10,11 +10,7 @@ BORN_SENTENCE = "(born 1970) is a musician."
 IS_A_SENTENCE = "The Beatles is a rock band formed in Liverpool in 1960."
 SHORT_SENTENCE = "Short."
 
-WIKI_SEARCH_HIT = {
-    "query": {
-        "search": [{"title": "The Beatles", "snippet": "English rock band"}]
-    }
-}
+WIKI_SEARCH_HIT = {"query": {"search": [{"title": "The Beatles", "snippet": "English rock band"}]}}
 
 WIKI_EXTRACT_RESPONSE = {
     "query": {
@@ -35,38 +31,45 @@ WIKI_EXTRACT_RESPONSE = {
 
 
 def _search_stub(base_url, response_body):
-    stub(base_url, {
-        "request": {
-            "method": "GET",
-            "urlPath": "/__wiki__",
-            "queryParameters": {"list": {"equalTo": "search"}},
+    stub(
+        base_url,
+        {
+            "request": {
+                "method": "GET",
+                "urlPath": "/__wiki__",
+                "queryParameters": {"list": {"equalTo": "search"}},
+            },
+            "response": {
+                "status": 200,
+                "headers": {"Content-Type": "application/json"},
+                "jsonBody": response_body,
+            },
         },
-        "response": {
-            "status": 200,
-            "headers": {"Content-Type": "application/json"},
-            "jsonBody": response_body,
-        },
-    })
+    )
 
 
 def _extract_stub(base_url, response_body):
-    stub(base_url, {
-        "request": {
-            "method": "GET",
-            "urlPath": "/__wiki__",
-            "queryParameters": {"prop": {"equalTo": "extracts"}},
+    stub(
+        base_url,
+        {
+            "request": {
+                "method": "GET",
+                "urlPath": "/__wiki__",
+                "queryParameters": {"prop": {"equalTo": "extracts"}},
+            },
+            "response": {
+                "status": 200,
+                "headers": {"Content-Type": "application/json"},
+                "jsonBody": response_body,
+            },
         },
-        "response": {
-            "status": 200,
-            "headers": {"Content-Type": "application/json"},
-            "jsonBody": response_body,
-        },
-    })
+    )
 
 
 # ---------------------------------------------------------------------------
 # fetch_facts / _wiki_sentences
 # ---------------------------------------------------------------------------
+
 
 def test_fetch_facts_returns_sentences(wiremock_base_url):
     _search_stub(wiremock_base_url, WIKI_SEARCH_HIT)
@@ -104,10 +107,13 @@ def test_wiki_sentences_empty_extract(wiremock_base_url):
 
 
 def test_wiki_sentences_exception_returns_empty(wiremock_base_url):
-    stub(wiremock_base_url, {
-        "request": {"method": "GET", "urlPath": "/__wiki__"},
-        "response": {"status": 500, "body": "error"},
-    })
+    stub(
+        wiremock_base_url,
+        {
+            "request": {"method": "GET", "urlPath": "/__wiki__"},
+            "response": {"status": 500, "body": "error"},
+        },
+    )
     result = _wiki_sentences("The Beatles")
     assert result == []
 
@@ -115,6 +121,7 @@ def test_wiki_sentences_exception_returns_empty(wiremock_base_url):
 # ---------------------------------------------------------------------------
 # _extract_facts  (pure — no network)
 # ---------------------------------------------------------------------------
+
 
 def test_extract_facts_filters_short_sentences():
     assert _extract_facts(SHORT_SENTENCE) == []
@@ -140,9 +147,9 @@ def test_extract_facts_returns_at_most_four():
 
 
 def test_extract_facts_shuffles_sentences():
-    sentences = " ".join([
-        f"This is interesting sentence number {i} about the famous artist and their work." for i in range(10)
-    ])
+    sentences = " ".join(
+        [f"This is interesting sentence number {i} about the famous artist and their work." for i in range(10)]
+    )
     results = set()
     for _ in range(20):
         r = _extract_facts(sentences)

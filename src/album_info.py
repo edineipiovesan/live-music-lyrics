@@ -44,8 +44,12 @@ def fetch_album_info(title: str, artist: str) -> dict:
             }
             log.info(
                 "iTunes: album=%r year=%r genre=%r tracks=%d duration=%.0fs artwork=%s",
-                info["album"], info["year"], info["genre"],
-                info["trackCount"], info["duration_s"], "yes" if artwork else "no",
+                info["album"],
+                info["year"],
+                info["genre"],
+                info["trackCount"],
+                info["duration_s"],
+                "yes" if artwork else "no",
             )
             return info
 

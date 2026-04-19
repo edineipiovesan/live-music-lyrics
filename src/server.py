@@ -38,9 +38,9 @@ state: dict = {
     "genre": "",
     "trackCount": 0,
     "artworkUrl": "",
-    "duration_s": 0.0,       # song duration from iTunes, read by RecognitionLoop
+    "duration_s": 0.0,  # song duration from iTunes, read by RecognitionLoop
     "pending_recognition": None,
-    "facts": [],             # Wikipedia facts about the artist
+    "facts": [],  # Wikipedia facts about the artist
     "history": load_history(config.HISTORY_MAX),
     "rate_limited_until": None,  # monotonic time when AudD backoff ends, or None
     "active_device": config.AUDIO_DEVICE or None,
@@ -146,18 +146,21 @@ async def _apply_pending_recognition():
         # Archive the song that was playing before this one
         if state["song"]:
             entry = {
-                "title":      state["song"],
-                "artist":     state["artist"],
-                "album":      state["album"],
+                "title": state["song"],
+                "artist": state["artist"],
+                "album": state["album"],
                 "artworkUrl": state["artworkUrl"],
-                "playedAt":   datetime.now(timezone.utc).isoformat(),
+                "playedAt": datetime.now(timezone.utc).isoformat(),
             }
             state["history"].insert(0, entry)
             state["history"] = state["history"][:HISTORY_MAX]
             log.info("Added %r to history (%d entries)", entry["title"], len(state["history"]))
             await asyncio.to_thread(
                 record_play,
-                state["song"], state["artist"], state["album"], state["artworkUrl"],
+                state["song"],
+                state["artist"],
+                state["album"],
+                state["artworkUrl"],
             )
 
         # Run all blocking HTTP calls concurrently in thread pool
@@ -201,9 +204,7 @@ async def websocket_endpoint(websocket: WebSocket):
             line_index = tracker.current_line(lyrics) if lyrics else -1
 
             rate_limited_until = state.get("rate_limited_until")
-            rate_limited_remaining = (
-                max(0.0, rate_limited_until - time.monotonic()) if rate_limited_until else 0.0
-            )
+            rate_limited_remaining = max(0.0, rate_limited_until - time.monotonic()) if rate_limited_until else 0.0
 
             msg = {
                 "lineIndex": line_index,

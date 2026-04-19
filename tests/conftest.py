@@ -16,6 +16,7 @@ Colima / non-standard Docker socket:
   or export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE to the same path.
   TESTCONTAINERS_RYUK_DISABLED=true is required on Colima.
 """
+
 import os
 import time
 
@@ -33,6 +34,7 @@ WIREMOCK_IMAGE = "wiremock/wiremock:latest"
 # ---------------------------------------------------------------------------
 # WireMock container lifecycle
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session")
 def wiremock_base_url():
@@ -62,6 +64,7 @@ def _wait_for_wiremock(base: str, retries: int = 40, delay: float = 0.5) -> None
 # Stub helpers (Admin REST API)
 # ---------------------------------------------------------------------------
 
+
 def stub(base_url: str, mapping: dict) -> None:
     """Register a single WireMock stub mapping."""
     resp = requests.post(f"{base_url}/__admin/mappings", json=mapping, timeout=5)
@@ -85,6 +88,7 @@ def clean_wiremock(wiremock_base_url):
 # URL monkeypatching
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def patch_api_urls(monkeypatch, wiremock_base_url):
     """Route all external API calls through WireMock. Not autouse."""
@@ -99,29 +103,33 @@ def patch_api_urls(monkeypatch, wiremock_base_url):
 # FastAPI test client
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def test_client():
     """TestClient with reset server state."""
     import src.server as server
     from src.tracker import PlaybackTracker
 
-    server.state.update({
-        "tracker": PlaybackTracker(),
-        "lyrics": [],
-        "song": None,
-        "artist": None,
-        "album": "",
-        "year": "",
-        "genre": "",
-        "trackCount": 0,
-        "artworkUrl": "",
-        "duration_s": 0.0,
-        "pending_recognition": None,
-        "facts": [],
-        "history": [],
-        "rate_limited_until": None,
-    })
+    server.state.update(
+        {
+            "tracker": PlaybackTracker(),
+            "lyrics": [],
+            "song": None,
+            "artist": None,
+            "album": "",
+            "year": "",
+            "genre": "",
+            "trackCount": 0,
+            "artworkUrl": "",
+            "duration_s": 0.0,
+            "pending_recognition": None,
+            "facts": [],
+            "history": [],
+            "rate_limited_until": None,
+        }
+    )
     server.recognition_loop = None
 
     from fastapi.testclient import TestClient
+
     return TestClient(server.app)

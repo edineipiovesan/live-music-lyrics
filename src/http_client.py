@@ -1,4 +1,5 @@
 """Thin HTTP helpers wrapping requests with retry + backoff logic."""
+
 import logging
 import time
 
@@ -37,7 +38,7 @@ def _with_retry(
             continue
 
         if resp.status_code == 429:
-            retry_after = float(resp.headers.get("Retry-After", backoff_base * (2 ** attempt)))
+            retry_after = float(resp.headers.get("Retry-After", backoff_base * (2**attempt)))
             if attempt < retries:
                 log.warning("Rate limited (429) — waiting %.1fs (attempt %d/%d)", retry_after, attempt + 1, retries)
                 time.sleep(retry_after)
@@ -54,6 +55,6 @@ def _with_retry(
 
 
 def _sleep(base: float, attempt: int, reason: str) -> None:
-    wait = base * (2 ** attempt)
+    wait = base * (2**attempt)
     log.warning("%s — retrying in %.1fs", reason, wait)
     time.sleep(wait)

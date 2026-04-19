@@ -11,6 +11,7 @@ from src.audio_capture import AudioCapture, _frames_to_wav
 # _frames_to_wav
 # ---------------------------------------------------------------------------
 
+
 def test_frames_to_wav_produces_valid_wav():
     frames = [np.zeros((1600, 1), dtype=np.float32)]
     wav_bytes = _frames_to_wav(frames, sample_rate=16000)
@@ -41,6 +42,7 @@ def test_frames_to_wav_multiple_frames():
 # ---------------------------------------------------------------------------
 # AudioCapture
 # ---------------------------------------------------------------------------
+
 
 def test_init_creates_queue_reference():
     q = queue.Queue(maxsize=5)
@@ -73,6 +75,7 @@ def test_callback_emits_chunk_when_enough_samples():
     cap = AudioCapture(q)
     # SAMPLE_RATE=16000, CHUNK_DURATION_S=5, so need 80000 samples
     import src.audio_capture as audio_capture
+
     total_needed = audio_capture.SAMPLE_RATE * audio_capture.CHUNK_DURATION_S
     frame = np.zeros((total_needed, 1), dtype=np.float32)
     cap._callback(frame, total_needed, None, None)
@@ -87,6 +90,7 @@ def test_callback_resets_frames_after_emit():
     q = queue.Queue(maxsize=10)
     cap = AudioCapture(q)
     import src.audio_capture as audio_capture
+
     total_needed = audio_capture.SAMPLE_RATE * audio_capture.CHUNK_DURATION_S
     frame = np.zeros((total_needed, 1), dtype=np.float32)
     cap._callback(frame, total_needed, None, None)
@@ -99,6 +103,7 @@ def test_callback_drops_chunk_when_queue_full():
     q.put("placeholder")  # fill the queue
     cap = AudioCapture(q)
     import src.audio_capture as audio_capture
+
     total_needed = audio_capture.SAMPLE_RATE * audio_capture.CHUNK_DURATION_S
     frame = np.zeros((total_needed, 1), dtype=np.float32)
     cap._callback(frame, total_needed, None, None)  # should not raise
@@ -118,8 +123,10 @@ def test_start_creates_stream():
     cap = AudioCapture(q)
     mock_stream = MagicMock()
     mock_device = {"name": "Mock Microphone"}
-    with patch("sounddevice.query_devices", return_value=mock_device), \
-         patch("sounddevice.InputStream", return_value=mock_stream):
+    with (
+        patch("sounddevice.query_devices", return_value=mock_device),
+        patch("sounddevice.InputStream", return_value=mock_stream),
+    ):
         cap.start()
     mock_stream.start.assert_called_once()
 

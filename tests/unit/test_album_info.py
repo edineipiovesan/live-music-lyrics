@@ -17,14 +17,17 @@ ITUNES_TRACK_RESULT = {
 
 
 def _itunes_stub(base_url, results):
-    stub(base_url, {
-        "request": {"method": "GET", "urlPath": "/__itunes__"},
-        "response": {
-            "status": 200,
-            "headers": {"Content-Type": "application/json"},
-            "jsonBody": {"resultCount": len(results), "results": results},
+    stub(
+        base_url,
+        {
+            "request": {"method": "GET", "urlPath": "/__itunes__"},
+            "response": {
+                "status": 200,
+                "headers": {"Content-Type": "application/json"},
+                "jsonBody": {"resultCount": len(results), "results": results},
+            },
         },
-    })
+    )
 
 
 def test_fetch_album_info_success(wiremock_base_url):
@@ -77,9 +80,12 @@ def test_fetch_album_info_none_track_count(wiremock_base_url):
 
 
 def test_fetch_album_info_exception_returns_fallback(wiremock_base_url):
-    stub(wiremock_base_url, {
-        "request": {"method": "GET", "urlPath": "/__itunes__"},
-        "response": {"status": 500, "body": "error"},
-    })
+    stub(
+        wiremock_base_url,
+        {
+            "request": {"method": "GET", "urlPath": "/__itunes__"},
+            "response": {"status": 500, "body": "error"},
+        },
+    )
     info = fetch_album_info("Song", "Artist")
     assert info == {"album": "", "year": "", "genre": "", "trackCount": 0, "artworkUrl": "", "duration_s": 0.0}

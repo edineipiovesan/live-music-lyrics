@@ -8,6 +8,7 @@ import src.server as server
 # GET /
 # ---------------------------------------------------------------------------
 
+
 def test_index_returns_html(test_client):
     resp = test_client.get("/")
     assert resp.status_code == 200
@@ -16,6 +17,7 @@ def test_index_returns_html(test_client):
 # ---------------------------------------------------------------------------
 # POST /seek
 # ---------------------------------------------------------------------------
+
 
 def test_seek_returns_ok(test_client):
     resp = test_client.post("/seek", json={"time_s": 45.0})
@@ -53,6 +55,7 @@ def test_seek_default_time_when_missing(test_client):
 # POST /recognize-now
 # ---------------------------------------------------------------------------
 
+
 def test_recognize_now_without_loop_returns_503(test_client):
     server.recognition_loop = None
     resp = test_client.post("/recognize-now")
@@ -72,6 +75,7 @@ def test_recognize_now_with_loop_returns_triggered(test_client):
 # ---------------------------------------------------------------------------
 # POST /api/override
 # ---------------------------------------------------------------------------
+
 
 def test_override_sets_pending_recognition(test_client):
     resp = test_client.post("/api/override", json={"artist": "The Beatles", "title": "Come Together"})
@@ -101,6 +105,7 @@ def test_override_empty_fields_returns_422(test_client):
 # GET /api/devices
 # ---------------------------------------------------------------------------
 
+
 def test_list_devices_returns_input_devices(test_client):
     fake_devices = [
         {"name": "Built-in Microphone", "max_input_channels": 2, "max_output_channels": 0},
@@ -127,6 +132,7 @@ def test_list_devices_includes_active(test_client):
 # ---------------------------------------------------------------------------
 # POST /api/devices/select
 # ---------------------------------------------------------------------------
+
 
 def test_select_device_ok(test_client):
     fake_info = {"name": "BlackHole 2ch", "max_input_channels": 2}

@@ -45,11 +45,13 @@ def main():
     server.recognition_loop = recognition_loop
 
     if config.OPEN_BROWSER:
+
         def open_browser():
             time.sleep(1.5)
             url = f"http://localhost:{config.PORT}"
             log.info("Opening browser at %s", url)
             webbrowser.open(url)
+
         threading.Thread(target=open_browser, daemon=True).start()
 
     log.info("Web server starting at http://%s:%d", config.HOST, config.PORT)

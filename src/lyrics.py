@@ -10,12 +10,13 @@ log = logging.getLogger(__name__)
 
 # Provider URLs — overridable in tests via monkeypatch
 LRCLIB_SEARCH_URL = "https://lrclib.net/api/search"
-LRCLIB_GET_URL    = "https://lrclib.net/api/get"
+LRCLIB_GET_URL = "https://lrclib.net/api/get"
 
 
 # ---------------------------------------------------------------------------
 # Local LRC cache
 # ---------------------------------------------------------------------------
+
 
 def _cache_key(title: str, artist: str) -> str:
     """Slugify artist+title into a safe filename."""
@@ -46,6 +47,7 @@ def _cache_write(title: str, artist: str, lrc: str) -> None:
 # ---------------------------------------------------------------------------
 # Providers
 # ---------------------------------------------------------------------------
+
 
 def _lrclib_search(title: str, artist: str) -> str | None:
     """Search lrclib.net and return raw LRC for the first synced hit."""
@@ -91,6 +93,7 @@ _PROVIDERS = [_lrclib_search, _lrclib_get]
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def fetch_lrc(title: str, artist: str) -> str | None:
     """Fetch synced LRC lyrics, checking the local cache first then each provider."""

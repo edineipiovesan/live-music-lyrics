@@ -10,10 +10,10 @@ from .http_client import http_post
 
 log = logging.getLogger(__name__)
 
-AUDD_URL            = "https://api.audd.io/"
+AUDD_URL = "https://api.audd.io/"
 LISTEN_BEFORE_END_S = config.LISTEN_BEFORE_END_S
 FALLBACK_INTERVAL_S = config.FALLBACK_INTERVAL_S
-AUDD_BACKOFF_S      = config.AUDD_BACKOFF_S
+AUDD_BACKOFF_S = config.AUDD_BACKOFF_S
 
 # AudD error codes that indicate quota / rate-limit exhaustion.
 _QUOTA_ERROR_CODES = {901}
@@ -231,8 +231,7 @@ class RecognitionLoop:
 
             # Recognition succeeded — hand off to server state
             self._state["pending_recognition"] = result
-            log.info("Recognition complete: %r by %r at %.1fs",
-                     result["title"], result["artist"], result["timecode_s"])
+            log.info("Recognition complete: %r by %r at %.1fs", result["title"], result["artist"], result["timecode_s"])
 
             # Sleep until near the end of the song, then listen again
             self._sleep_until_near_end(result["timecode_s"])
