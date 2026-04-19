@@ -12,12 +12,38 @@
       --dim2: rgba(255,255,255,0.25);
       --dim3: rgba(255,255,255,0.10);
       --transition: 0.45s cubic-bezier(0.4,0,0.2,1);
+      --bg-page: #0d0d0d;
+      --bg-overlay-grad: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%);
+      --text-primary: #fff;
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.06);
+      --sidebar-border: rgba(255,255,255,0.07);
+      --ctrl-bg: rgba(0,0,0,0.55);
+      --ctrl-border: rgba(255,255,255,0.12);
+      --ctrl-color: rgba(255,255,255,0.7);
+      --lyrics-fade-color: #0d0d0d;
+    }
+
+    html[data-theme="light"] {
+      --dim1: rgba(0,0,0,0.75);
+      --dim2: rgba(0,0,0,0.45);
+      --dim3: rgba(0,0,0,0.15);
+      --bg-page: #f0f0f0;
+      --bg-overlay-grad: linear-gradient(to right, rgba(240,240,240,0.92) 0%, rgba(240,240,240,0.6) 100%);
+      --text-primary: #111;
+      --card-bg: rgba(0,0,0,0.04);
+      --card-border: rgba(0,0,0,0.08);
+      --sidebar-border: rgba(0,0,0,0.08);
+      --ctrl-bg: rgba(255,255,255,0.8);
+      --ctrl-border: rgba(0,0,0,0.15);
+      --ctrl-color: rgba(0,0,0,0.7);
+      --lyrics-fade-color: #f0f0f0;
     }
 
     html, body {
       height: 100%;
-      background: #0d0d0d;
-      color: #fff;
+      background: var(--bg-page);
+      color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
       overflow: hidden;
     }
@@ -39,7 +65,7 @@
     #bg-overlay {
       position: fixed;
       inset: 0;
-      background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%);
+      background: var(--bg-overlay-grad);
       z-index: 1;
     }
 
@@ -137,7 +163,7 @@
       display: flex;
       flex-direction: column;
       padding: 0 24px 24px;
-      border-top: 1px solid rgba(255,255,255,0.07);
+      border-top: 1px solid var(--sidebar-border);
     }
 
     /* Album art: scales with sidebar width */
@@ -199,8 +225,8 @@
       display: none;
       margin-bottom: 20px;
       padding: 11px 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 10px;
       /* Reserve height so the card doesn't jump when text changes */
       min-height: 72px;
@@ -263,8 +289,8 @@
     }
 
     .info-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.06);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 10px;
       padding: 10px 12px;
       min-width: 0; /* prevent grid blowout */
@@ -421,11 +447,11 @@
     }
     #lyrics-panel::before {
       top: 0;
-      background: linear-gradient(to bottom, #0d0d0d 0%, transparent 100%);
+      background: linear-gradient(to bottom, var(--lyrics-fade-color) 0%, transparent 100%);
     }
     #lyrics-panel::after {
       bottom: 0;
-      background: linear-gradient(to top, #0d0d0d 0%, transparent 100%);
+      background: linear-gradient(to top, var(--lyrics-fade-color) 0%, transparent 100%);
     }
 
     #lyrics-scroll {
@@ -487,11 +513,11 @@
       align-items: center;
       gap: 6px;
       padding: 7px 13px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid var(--ctrl-border);
       border-radius: 20px;
-      background: rgba(0,0,0,0.55);
+      background: var(--ctrl-bg);
       backdrop-filter: blur(12px);
-      color: rgba(255,255,255,0.7);
+      color: var(--ctrl-color);
       font-size: 0.78rem;
       font-weight: 600;
       font-family: inherit;
@@ -556,8 +582,8 @@
     #search-overlay.visible { display: flex; }
 
     #search-modal {
-      background: #1a1a1a;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: var(--card-bg, #1a1a1a);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 28px 32px;
       width: 360px;
@@ -566,7 +592,7 @@
     #search-modal h3 {
       font-size: 1rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text-primary);
       margin-bottom: 20px;
     }
     .search-field { margin-bottom: 14px; }
@@ -575,22 +601,22 @@
       font-size: 0.68rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
+      color: var(--dim2);
       margin-bottom: 6px;
     }
     .search-field input {
       width: 100%;
       padding: 9px 12px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
+      background: var(--ctrl-bg);
+      border: 1px solid var(--ctrl-border);
       border-radius: 8px;
-      color: #fff;
+      color: var(--text-primary);
       font-size: 0.9rem;
       font-family: inherit;
       outline: none;
       transition: border-color 0.15s;
     }
-    .search-field input:focus { border-color: rgba(255,255,255,0.35); }
+    .search-field input:focus { border-color: var(--dim1); }
     #search-actions {
       display: flex;
       gap: 10px;
@@ -600,17 +626,17 @@
     .search-btn {
       padding: 8px 18px;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid var(--ctrl-border);
       font-size: 0.82rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       transition: background 0.15s;
     }
-    #btn-search-cancel { background: transparent; color: rgba(255,255,255,0.5); }
-    #btn-search-cancel:hover { background: rgba(255,255,255,0.07); }
-    #btn-search-submit { background: rgba(255,255,255,0.12); color: #fff; }
-    #btn-search-submit:hover { background: rgba(255,255,255,0.22); }
+    #btn-search-cancel { background: transparent; color: var(--dim2); }
+    #btn-search-cancel:hover { background: var(--card-bg); }
+    #btn-search-submit { background: var(--ctrl-bg); color: var(--text-primary); }
+    #btn-search-submit:hover { background: var(--card-border); }
   </style>
 </head>
 <body>
@@ -687,6 +713,15 @@
 
       <!-- Floating controls -->
       <div id="controls">
+        <button class="ctrl-btn" id="btn-theme" title="Toggle light/dark theme">
+          <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
         <button class="ctrl-btn" id="btn-fontsize" title="Change font size">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <text x="2" y="18" font-size="18" font-weight="bold" stroke="none" fill="currentColor">A</text>
@@ -1157,6 +1192,26 @@
       div.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
       return div;
     }
+
+    /* ── Theme toggle ── */
+    const THEME_KEY = 'live-lyrics-theme';
+    const moonSVG = '<circle cx="12" cy="12" r="5"/><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    const sunSVG  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+
+    function applyTheme(theme) {
+      const isLight = theme === 'light';
+      document.documentElement.setAttribute('data-theme', isLight ? 'light' : '');
+      document.getElementById('theme-icon').innerHTML = isLight ? moonSVG : sunSVG;
+    }
+
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+    applyTheme(savedTheme);
+
+    document.getElementById('btn-theme').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      localStorage.setItem(THEME_KEY, next);
+      applyTheme(next);
+    });
 
     /* ── WebSocket with auto-reconnect ── */
     function connect() {
