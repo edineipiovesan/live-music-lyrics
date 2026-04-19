@@ -6,10 +6,12 @@ import webbrowser
 
 import uvicorn
 
-from . import config  # must be first — loads .env and sets env vars
+from . import (
+    config,  # must be first — loads .env and sets env vars
+    server,
+)
 from .audio_capture import AudioCapture
 from .recognizer import RecognitionLoop
-from . import server
 
 logging.basicConfig(
     level=config.log_level_int(),

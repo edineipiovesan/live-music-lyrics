@@ -1,7 +1,6 @@
 import queue
 import threading
-import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

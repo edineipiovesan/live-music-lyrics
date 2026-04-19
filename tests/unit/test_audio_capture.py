@@ -1,14 +1,11 @@
 import io
 import queue
-import threading
 import wave
 from unittest.mock import MagicMock, patch
 
 import numpy as np
-import pytest
 
 from src.audio_capture import AudioCapture, _frames_to_wav
-
 
 # ---------------------------------------------------------------------------
 # _frames_to_wav

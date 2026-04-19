@@ -1,7 +1,4 @@
 import json
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 import src.server as server
 from tests.conftest import stub

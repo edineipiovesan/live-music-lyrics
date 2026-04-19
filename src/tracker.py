@@ -25,6 +25,6 @@ class PlaybackTracker:
         if not lyrics or self._recognized_at is None:
             return -1
         pos = self.position()
-        times = [l["time_s"] for l in lyrics]
+        times = [line["time_s"] for line in lyrics]
         idx = bisect.bisect_right(times, pos) - 1
         return max(idx, 0)
