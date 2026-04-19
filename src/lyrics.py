@@ -1,5 +1,7 @@
 import logging
 import re
+import unicodedata
+from pathlib import Path
 
 from . import config
 from .http_client import http_get
@@ -9,6 +11,36 @@ log = logging.getLogger(__name__)
 # Provider URLs — overridable in tests via monkeypatch
 LRCLIB_SEARCH_URL = "https://lrclib.net/api/search"
 LRCLIB_GET_URL    = "https://lrclib.net/api/get"
+
+
+# ---------------------------------------------------------------------------
+# Local LRC cache
+# ---------------------------------------------------------------------------
+
+def _cache_key(title: str, artist: str) -> str:
+    """Slugify artist+title into a safe filename."""
+    raw = f"{artist}-{title}".lower()
+    normalized = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", normalized).strip("-") + ".lrc"
+
+
+def _cache_read(title: str, artist: str) -> str | None:
+    cache_dir = Path(config.LYRICS_CACHE_DIR).expanduser()
+    path = cache_dir / _cache_key(title, artist)
+    if path.exists():
+        log.info("Cache hit for %r by %r", title, artist)
+        return path.read_text(encoding="utf-8")
+    return None
+
+
+def _cache_write(title: str, artist: str, lrc: str) -> None:
+    try:
+        cache_dir = Path(config.LYRICS_CACHE_DIR).expanduser()
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        (cache_dir / _cache_key(title, artist)).write_text(lrc, encoding="utf-8")
+        log.info("Cached lyrics for %r by %r", title, artist)
+    except Exception as exc:
+        log.warning("Failed to cache lyrics: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -61,11 +93,15 @@ _PROVIDERS = [_lrclib_search, _lrclib_get]
 # ---------------------------------------------------------------------------
 
 def fetch_lrc(title: str, artist: str) -> str | None:
-    """Fetch synced LRC lyrics, trying each provider in order."""
+    """Fetch synced LRC lyrics, checking the local cache first then each provider."""
     log.info("Fetching lyrics for %r by %r", title, artist)
+    cached = _cache_read(title, artist)
+    if cached:
+        return cached
     for provider in _PROVIDERS:
         result = provider(title, artist)
         if result:
+            _cache_write(title, artist, result)
             return result
         log.info("Provider %s returned nothing — trying next", getattr(provider, "__name__", repr(provider)))
     log.warning("No synced lyrics found for %r by %r from any provider", title, artist)

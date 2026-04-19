@@ -2,7 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.lyrics import _lrclib_get, fetch_lrc, parse_lrc
+import src.lyrics as lyrics_mod
+from src.lyrics import _cache_key, _lrclib_get, fetch_lrc, parse_lrc
 from tests.conftest import stub
 
 SYNCED_LRC = "[00:01.00] First line\n[00:05.50] Second line\n"
@@ -77,7 +78,9 @@ def test_search_provider_used_first():
     """First provider is called; if it succeeds the second is never called."""
     mock_search = MagicMock(return_value=SYNCED_LRC)
     mock_get = MagicMock()
-    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]):
+    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]), \
+         patch("src.lyrics._cache_read", return_value=None), \
+         patch("src.lyrics._cache_write"):
         result = fetch_lrc("Song", "Artist")
     assert result == SYNCED_LRC
     mock_search.assert_called_once_with("Song", "Artist")
@@ -88,7 +91,9 @@ def test_fallback_to_direct_when_search_returns_none():
     """Second provider is tried when first returns None."""
     mock_search = MagicMock(return_value=None)
     mock_get = MagicMock(return_value=SYNCED_LRC)
-    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]):
+    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]), \
+         patch("src.lyrics._cache_read", return_value=None), \
+         patch("src.lyrics._cache_write"):
         result = fetch_lrc("Song", "Artist")
     assert result == SYNCED_LRC
     mock_get.assert_called_once_with("Song", "Artist")
@@ -97,7 +102,8 @@ def test_fallback_to_direct_when_search_returns_none():
 def test_returns_none_when_all_providers_fail():
     mock_search = MagicMock(return_value=None)
     mock_get = MagicMock(return_value=None)
-    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]):
+    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]), \
+         patch("src.lyrics._cache_read", return_value=None):
         assert fetch_lrc("Song", "Artist") is None
 
 
@@ -163,3 +169,51 @@ def test_parse_lrc_preserves_text():
     lrc = "[00:01.00] Hello world, this is a lyric!\n"
     result = parse_lrc(lrc)
     assert result[0]["text"] == "Hello world, this is a lyric!"
+
+
+# ---------------------------------------------------------------------------
+# Cache tests (pure — no Docker, no network)
+# ---------------------------------------------------------------------------
+
+def test_cache_key_is_stable():
+    assert _cache_key("Come Together", "The Beatles") == _cache_key("Come Together", "The Beatles")
+
+
+def test_cache_key_is_filename_safe():
+    key = _cache_key("Don't Stop Me Now", "Queen")
+    assert "/" not in key
+    assert key.endswith(".lrc")
+
+
+def test_fetch_lrc_returns_cached_without_http(tmp_path, monkeypatch):
+    monkeypatch.setattr(lyrics_mod.config, "LYRICS_CACHE_DIR", str(tmp_path))
+    # Pre-populate cache
+    cache_file = tmp_path / _cache_key("Song", "Artist")
+    cache_file.write_text(SYNCED_LRC, encoding="utf-8")
+
+    with patch("src.lyrics._PROVIDERS", []) as _:  # no providers needed
+        result = fetch_lrc("Song", "Artist")
+    assert result == SYNCED_LRC
+
+
+def test_fetch_lrc_writes_cache_on_provider_hit(tmp_path, monkeypatch):
+    monkeypatch.setattr(lyrics_mod.config, "LYRICS_CACHE_DIR", str(tmp_path))
+    mock_search = MagicMock(return_value=SYNCED_LRC)
+    mock_get = MagicMock(return_value=None)
+    with patch("src.lyrics._PROVIDERS", [mock_search, mock_get]):
+        fetch_lrc("Song", "Artist")
+
+    cache_file = tmp_path / _cache_key("Song", "Artist")
+    assert cache_file.exists()
+    assert cache_file.read_text(encoding="utf-8") == SYNCED_LRC
+
+
+def test_fetch_lrc_cache_hit_skips_providers(tmp_path, monkeypatch):
+    monkeypatch.setattr(lyrics_mod.config, "LYRICS_CACHE_DIR", str(tmp_path))
+    cache_file = tmp_path / _cache_key("Song", "Artist")
+    cache_file.write_text(SYNCED_LRC, encoding="utf-8")
+
+    mock_provider = MagicMock()
+    with patch("src.lyrics._PROVIDERS", [mock_provider]):
+        fetch_lrc("Song", "Artist")
+    mock_provider.assert_not_called()
