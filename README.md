@@ -1,5 +1,7 @@
 # live-music-lyrics
 
+[![CI](https://github.com/edineipiovesan/live-music-lyrics/actions/workflows/python-ci.yml/badge.svg)](https://github.com/edineipiovesan/live-music-lyrics/actions/workflows/python-ci.yml)
+
 Displays synchronized lyrics for whatever song is playing through your speakers — in real time, in a browser. Point a microphone at the room (or use a loopback device), and the app listens continuously, fingerprints the audio, fetches LRC lyrics, and scrolls them in sync.
 
 ![image](/images/screenshot.png)
