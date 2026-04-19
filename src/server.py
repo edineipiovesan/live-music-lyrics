@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -39,6 +40,7 @@ state: dict = {
     "pending_recognition": None,
     "facts": [],             # Wikipedia facts about the artist
     "history": [],           # list of {title, artist, album, artworkUrl, playedAt}
+    "rate_limited_until": None,  # monotonic time when AudD backoff ends, or None
 }
 
 HISTORY_MAX = config.HISTORY_MAX
@@ -134,6 +136,11 @@ async def websocket_endpoint(websocket: WebSocket):
             lyrics = state["lyrics"]
             line_index = tracker.current_line(lyrics) if lyrics else -1
 
+            rate_limited_until = state.get("rate_limited_until")
+            rate_limited_remaining = (
+                max(0.0, rate_limited_until - time.monotonic()) if rate_limited_until else 0.0
+            )
+
             msg = {
                 "lineIndex": line_index,
                 "factRotationS": config.FACT_ROTATION_S,
@@ -147,6 +154,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 "lyrics": lyrics,
                 "facts": state["facts"],
                 "history": state["history"],
+                "rateLimitedRemainingS": round(rate_limited_remaining),
             }
             await websocket.send_text(json.dumps(msg))
             await asyncio.sleep(0.5)

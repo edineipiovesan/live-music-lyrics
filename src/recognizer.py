@@ -13,6 +13,13 @@ log = logging.getLogger(__name__)
 AUDD_URL            = "https://api.audd.io/"
 LISTEN_BEFORE_END_S = config.LISTEN_BEFORE_END_S
 FALLBACK_INTERVAL_S = config.FALLBACK_INTERVAL_S
+AUDD_BACKOFF_S      = config.AUDD_BACKOFF_S
+
+# AudD error codes that indicate quota / rate-limit exhaustion.
+_QUOTA_ERROR_CODES = {901}
+
+# Sentinel returned by recognize() when AudD quota is exceeded.
+_QUOTA_EXCEEDED = {"quota_exceeded": True}
 
 
 def _parse_timecode(tc_field) -> float:
@@ -40,7 +47,10 @@ def _parse_timecode(tc_field) -> float:
 
 
 def recognize(wav_bytes: bytes, api_key: str, chunk_start_time: float, chunk_end_time: float) -> dict | None:
-    """Send WAV bytes to AudD. Returns {title, artist, album, timecode_s, ref_time} or None.
+    """Send WAV bytes to AudD. Returns one of:
+    - {title, artist, album, timecode_s, ref_time}  — successful recognition
+    - _QUOTA_EXCEEDED sentinel dict                  — quota / rate-limit error
+    - None                                           — no match or transient error
 
     timecode_s is the raw AudD offset — the song position at the END of the
     submitted audio chunk (AudD reports where the clip ends in the song).
@@ -62,7 +72,12 @@ def recognize(wav_bytes: bytes, api_key: str, chunk_start_time: float, chunk_end
 
         status = data.get("status")
         if status != "success":
-            log.warning("AudD returned status=%r — error: %s", status, data.get("error"))
+            error = data.get("error") or {}
+            error_code = error.get("error_code") if isinstance(error, dict) else None
+            if error_code in _QUOTA_ERROR_CODES or resp.status_code == 429:
+                log.warning("AudD quota exceeded (code %s) — backing off %ds", error_code, AUDD_BACKOFF_S)
+                return _QUOTA_EXCEEDED
+            log.warning("AudD returned status=%r — error: %s", status, error)
             return None
         if not data.get("result"):
             log.info("AudD: no song recognized in this chunk")
@@ -133,6 +148,19 @@ class RecognitionLoop:
             except queue.Empty:
                 continue
 
+    def _sleep_rate_limited(self):
+        """Back off for AUDD_BACKOFF_S and expose remaining time in state."""
+        until = time.monotonic() + AUDD_BACKOFF_S
+        self._state["rate_limited_until"] = until
+        log.info("Rate-limited — pausing recognition for %ds", AUDD_BACKOFF_S)
+        remaining = AUDD_BACKOFF_S
+        while remaining > 0:
+            self._skip_event.wait(timeout=min(remaining, 1))
+            self._skip_event.clear()
+            remaining = until - time.monotonic()
+        self._state["rate_limited_until"] = None
+        log.info("Rate-limit backoff complete — resuming recognition")
+
     def _sleep_until_near_end(self, current_position_s: float):
         """Sleep until LISTEN_BEFORE_END_S seconds before the song ends.
 
@@ -193,7 +221,11 @@ class RecognitionLoop:
             while result is None:
                 wav, chunk_start_time, chunk_end_time = self._next_fresh_chunk()
                 result = recognize(wav, self._api_key, chunk_start_time, chunk_end_time)
-                if result is None:
+                if result is _QUOTA_EXCEEDED:
+                    self._sleep_rate_limited()
+                    result = None
+                    self._drain_queue()
+                elif result is None:
                     log.info("No match — retrying with next chunk...")
                     self._drain_queue()
 

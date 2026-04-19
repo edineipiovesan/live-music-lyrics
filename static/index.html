@@ -523,6 +523,25 @@
       opacity: 0.6;
       pointer-events: none;
     }
+
+    /* ── Rate-limit banner ── */
+    #rate-limit-banner {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 24px;
+      z-index: 10;
+      padding: 6px 13px;
+      border: 1px solid rgba(255,180,0,0.3);
+      border-radius: 20px;
+      background: rgba(80,50,0,0.7);
+      backdrop-filter: blur(12px);
+      color: rgba(255,200,80,0.9);
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    #rate-limit-banner.visible { display: block; }
   </style>
 </head>
 <body>
@@ -593,6 +612,9 @@
 
     <!-- Right: lyrics -->
     <main id="lyrics-panel">
+
+      <!-- Rate-limit banner -->
+      <div id="rate-limit-banner"></div>
 
       <!-- Floating controls -->
       <div id="controls">
@@ -822,12 +844,25 @@
       }
     }
 
+    /* ── Rate-limit banner ── */
+    const rateLimitBannerEl = document.getElementById('rate-limit-banner');
+
+    function updateRateLimitBanner(remainingS) {
+      if (remainingS > 0) {
+        rateLimitBannerEl.textContent = `AudD rate limited — retrying in ${remainingS}s`;
+        rateLimitBannerEl.classList.add('visible');
+      } else {
+        rateLimitBannerEl.classList.remove('visible');
+      }
+    }
+
     /* ── WebSocket state ── */
     let currentSong = '';
 
     function applyState(msg) {
-      const { lineIndex, song, artist, album, year, genre, trackCount, artworkUrl, lyrics, facts: newFacts, factRotationS, history } = msg;
+      const { lineIndex, song, artist, album, year, genre, trackCount, artworkUrl, lyrics, facts: newFacts, factRotationS, history, rateLimitedRemainingS } = msg;
 
+      updateRateLimitBanner(rateLimitedRemainingS || 0);
       renderHistory(history || []);
 
       const factsJson = JSON.stringify(newFacts || []);

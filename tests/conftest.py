@@ -119,6 +119,7 @@ def test_client():
         "pending_recognition": None,
         "facts": [],
         "history": [],
+        "rate_limited_until": None,
     })
     server.recognition_loop = None
 

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.recognizer import RecognitionLoop, _parse_timecode, recognize
+from src.recognizer import _QUOTA_EXCEEDED, RecognitionLoop, _parse_timecode, recognize
 from tests.conftest import stub
 
 # ---------------------------------------------------------------------------
@@ -81,8 +81,13 @@ def test_recognize_success(wiremock_base_url, patch_api_urls, clean_wiremock):
     assert result["ref_time"] == 2.0
 
 
-def test_recognize_status_not_success(wiremock_base_url, patch_api_urls, clean_wiremock):
+def test_recognize_quota_error_returns_sentinel(wiremock_base_url, patch_api_urls, clean_wiremock):
     _audd_stub(wiremock_base_url, {"status": "error", "error": {"error_code": 901}})
+    assert recognize(b"fake_wav", "test-key", 1.0, 2.0) is _QUOTA_EXCEEDED
+
+
+def test_recognize_non_quota_error_returns_none(wiremock_base_url, patch_api_urls, clean_wiremock):
+    _audd_stub(wiremock_base_url, {"status": "error", "error": {"error_code": 300}})
     assert recognize(b"fake_wav", "test-key", 1.0, 2.0) is None
 
 
@@ -227,6 +232,44 @@ def test_sleep_until_near_end_fallback_with_seek():
 
 
 # ---------------------------------------------------------------------------
+# _sleep_rate_limited
+# ---------------------------------------------------------------------------
+
+def test_sleep_rate_limited_sets_and_clears_state():
+    loop, _ = _make_loop()
+    import src.recognizer as rec_mod
+    original_backoff = rec_mod.AUDD_BACKOFF_S
+    rec_mod.AUDD_BACKOFF_S = 2
+    try:
+        with patch("time.monotonic", side_effect=[100.0, 101.0, 102.5]):
+            with patch.object(loop._skip_event, "wait"):
+                loop._sleep_rate_limited()
+        assert loop._state.get("rate_limited_until") is None
+    finally:
+        rec_mod.AUDD_BACKOFF_S = original_backoff
+
+
+def test_sleep_rate_limited_exposes_deadline_in_state():
+    loop, _ = _make_loop()
+    deadlines = []
+
+    def capture_wait(timeout):
+        deadlines.append(loop._state.get("rate_limited_until"))
+        return False
+
+    import src.recognizer as rec_mod
+    original = rec_mod.AUDD_BACKOFF_S
+    rec_mod.AUDD_BACKOFF_S = 1
+    try:
+        with patch("time.monotonic", side_effect=[100.0, 100.5, 101.5]):
+            with patch.object(loop._skip_event, "wait", side_effect=capture_wait):
+                loop._sleep_rate_limited()
+        assert any(d is not None for d in deadlines)
+    finally:
+        rec_mod.AUDD_BACKOFF_S = original
+
+
+# ---------------------------------------------------------------------------
 # RecognitionLoop.run()
 # ---------------------------------------------------------------------------
 
@@ -268,6 +311,30 @@ def test_run_retries_on_no_recognition():
         with pytest.raises(StopIteration):
             loop.run()
 
+    assert call_count[0] == 2
+
+
+def test_run_calls_sleep_rate_limited_on_quota():
+    q = queue.Queue()
+    q.put((b"wav1", 1.0, 2.0))
+    q.put((b"wav2", 2.0, 3.0))
+    state = {}
+    loop = RecognitionLoop(q, "key", state)
+    recognition_result = {"title": "S", "artist": "A", "album": "", "timecode_s": 5.0, "ref_time": 3.0}
+    call_count = [0]
+
+    def mock_recognize(*args, **kwargs):
+        call_count[0] += 1
+        return _QUOTA_EXCEEDED if call_count[0] == 1 else recognition_result
+
+    with patch("src.recognizer.recognize", side_effect=mock_recognize), \
+         patch.object(loop, "_drain_queue"), \
+         patch.object(loop, "_sleep_rate_limited") as mock_backoff, \
+         patch.object(loop, "_sleep_until_near_end", side_effect=StopIteration):
+        with pytest.raises(StopIteration):
+            loop.run()
+
+    mock_backoff.assert_called_once()
     assert call_count[0] == 2
 
 

@@ -67,6 +67,7 @@ AUDIO_QUEUE_SIZE = _int("AUDIO_QUEUE_SIZE", 10)
 # ── Recognition loop ──────────────────────────────────────────────────────────
 LISTEN_BEFORE_END_S = _int("LISTEN_BEFORE_END_S", 5)
 FALLBACK_INTERVAL_S = _int("FALLBACK_INTERVAL_S", 30)
+AUDD_BACKOFF_S      = _int("AUDD_BACKOFF_S", 60)
 
 # ── UI / history ──────────────────────────────────────────────────────────────
 HISTORY_MAX     = _int("HISTORY_MAX", 20)
