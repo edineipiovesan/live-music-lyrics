@@ -13,6 +13,7 @@ from . import config
 from .album_info import fetch_album_info
 from .facts import fetch_facts
 from .lyrics import fetch_lrc, parse_lrc
+from .store import load_history, record_play
 from .tracker import PlaybackTracker
 
 log = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ state: dict = {
     "duration_s": 0.0,       # song duration from iTunes, read by RecognitionLoop
     "pending_recognition": None,
     "facts": [],             # Wikipedia facts about the artist
-    "history": [],           # list of {title, artist, album, artworkUrl, playedAt}
+    "history": load_history(config.HISTORY_MAX),
     "rate_limited_until": None,  # monotonic time when AudD backoff ends, or None
 }
 
@@ -96,6 +97,10 @@ async def _apply_pending_recognition():
             state["history"].insert(0, entry)
             state["history"] = state["history"][:HISTORY_MAX]
             log.info("Added %r to history (%d entries)", entry["title"], len(state["history"]))
+            await asyncio.to_thread(
+                record_play,
+                state["song"], state["artist"], state["album"], state["artworkUrl"],
+            )
 
         # Run all blocking HTTP calls concurrently in thread pool
         lrc, album_info, facts = await asyncio.gather(

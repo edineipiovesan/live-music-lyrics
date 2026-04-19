@@ -72,6 +72,7 @@ AUDD_BACKOFF_S      = _int("AUDD_BACKOFF_S", 60)
 # ── UI / history ──────────────────────────────────────────────────────────────
 HISTORY_MAX     = _int("HISTORY_MAX", 20)
 FACT_ROTATION_S = _int("FACT_ROTATION_S", 9)
+DB_PATH         = _str("DB_PATH", "~/.local/share/live-music-lyrics/history.db")
 
 # ── HTTP timeouts (seconds) ───────────────────────────────────────────────────
 AUDD_TIMEOUT   = _int("AUDD_TIMEOUT", 15)
