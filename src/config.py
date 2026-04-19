@@ -63,6 +63,7 @@ OPEN_BROWSER = _bool("OPEN_BROWSER", True)
 SAMPLE_RATE      = _int("SAMPLE_RATE", 16000)
 CHUNK_DURATION_S = _int("CHUNK_DURATION_S", 5)
 AUDIO_QUEUE_SIZE = _int("AUDIO_QUEUE_SIZE", 10)
+AUDIO_DEVICE     = _str("AUDIO_DEVICE", "")
 
 # ── Recognition loop ──────────────────────────────────────────────────────────
 LISTEN_BEFORE_END_S = _int("LISTEN_BEFORE_END_S", 5)

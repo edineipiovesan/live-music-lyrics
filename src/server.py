@@ -5,7 +5,8 @@ import os
 import time
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+import sounddevice as sd
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -42,14 +43,49 @@ state: dict = {
     "facts": [],             # Wikipedia facts about the artist
     "history": load_history(config.HISTORY_MAX),
     "rate_limited_until": None,  # monotonic time when AudD backoff ends, or None
+    "active_device": config.AUDIO_DEVICE or None,
 }
 
 HISTORY_MAX = config.HISTORY_MAX
+
+# Reference kept so main.py can pass it to AudioCapture.start()
+audio_capture = None
 
 
 @app.get("/")
 async def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+
+@app.get("/api/devices")
+async def list_devices():
+    """Return all available input devices."""
+    try:
+        devices = sd.query_devices()
+        result = []
+        for idx, dev in enumerate(devices):
+            if dev.get("max_input_channels", 0) > 0:
+                result.append({"index": idx, "name": dev["name"]})
+        return JSONResponse({"devices": result, "active": state["active_device"]})
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/devices/select")
+async def select_device(request: Request):
+    """Switch the active audio capture device."""
+    body = await request.json()
+    device = body.get("device")  # int index or partial name string
+    try:
+        sd.query_devices(device=device, kind="input")
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Invalid device: {exc}")
+    state["active_device"] = device
+    if audio_capture is not None:
+        audio_capture.stop()
+        audio_capture.start(device=device)
+        log.info("Switched audio device to %r", device)
+    return JSONResponse({"status": "ok", "device": device})
 
 
 @app.post("/seek")

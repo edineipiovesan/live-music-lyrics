@@ -61,13 +61,15 @@ class AudioCapture:
                 except queue.Full:
                     log.warning("Audio queue full — dropping chunk #%d", self._chunk_count)
 
-    def start(self):
-        device_info = sd.query_devices(kind="input")
+    def start(self, device: int | str | None = None):
+        """Start audio capture on the given device index/name (None = system default)."""
+        device_info = sd.query_devices(device=device, kind="input")
         log.info("Using input device: %s", device_info.get("name", "unknown"))
         self._stream = sd.InputStream(
             samplerate=SAMPLE_RATE,
             channels=CHANNELS,
             dtype="float32",
+            device=device,
             callback=self._callback,
         )
         self._stream.start()
