@@ -1,5 +1,11 @@
-sounddevice
-numpy
-requests
-fastapi
-uvicorn[standard]
+anyio==4.13.0
+fastapi==0.136.0
+h11==0.16.0
+httptools==0.7.1
+numpy==2.4.4
+python-dotenv==1.2.2
+requests==2.33.1
+sounddevice==0.5.5
+starlette==1.0.0
+uvicorn==0.44.0
+websockets==16.0

@@ -8,11 +8,11 @@ from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-import config
-from album_info import fetch_album_info
-from facts import fetch_facts
-from lyrics import fetch_lrc, parse_lrc
-from tracker import PlaybackTracker
+from . import config
+from .album_info import fetch_album_info
+from .facts import fetch_facts
+from .lyrics import fetch_lrc, parse_lrc
+from .tracker import PlaybackTracker
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ app = FastAPI()
 # Set by main.py after RecognitionLoop is created
 recognition_loop = None
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Shared state populated by the recognition loop thread

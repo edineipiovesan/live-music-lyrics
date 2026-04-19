@@ -2,7 +2,7 @@ import logging
 
 import requests
 
-import config
+from . import config
 
 log = logging.getLogger(__name__)
 

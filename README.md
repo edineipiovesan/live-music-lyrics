@@ -68,16 +68,26 @@ flowchart TD
 
 ```
 .
-├── main.py           # Entry point — wires AudioCapture, RecognitionLoop, FastAPI
-├── audio_capture.py  # Captures mic audio into 5-second WAV chunks
-├── recognizer.py     # Sends chunks to AudD; RecognitionLoop sleeps between songs
-├── server.py         # FastAPI app — WebSocket, /seek, /recognize-now endpoints
-├── tracker.py        # PlaybackTracker — converts a timecode anchor into live position
-├── lyrics.py         # Fetches + parses LRC from lrclib.net
-├── album_info.py     # Fetches artwork and metadata from iTunes Search API
-├── requirements.txt
+├── main.py                 # Thin launcher — imports and calls src.main.main()
+├── src/
+│   ├── main.py             # Entry point — wires AudioCapture, RecognitionLoop, FastAPI
+│   ├── audio_capture.py    # Captures mic audio into 5-second WAV chunks
+│   ├── recognizer.py       # Sends chunks to AudD; RecognitionLoop sleeps between songs
+│   ├── server.py           # FastAPI app — WebSocket, /seek, /recognize-now endpoints
+│   ├── tracker.py          # PlaybackTracker — converts a timecode anchor into live position
+│   ├── lyrics.py           # Fetches + parses LRC from lrclib.net
+│   ├── album_info.py       # Fetches artwork and metadata from iTunes Search API
+│   ├── facts.py            # Fetches artist facts from Wikipedia
+│   └── config.py           # Loads .env and exposes typed settings
+├── tests/
+│   ├── conftest.py         # pytest fixtures (WireMock container, test client)
+│   ├── unit/               # Unit tests per module
+│   └── integration/        # End-to-end server tests (REST + WebSocket)
+├── requirements.txt        # Pinned production dependencies
+├── requirements-dev.txt    # Test and lint tools
+├── pyproject.toml          # pytest, coverage, and ruff config
 └── static/
-    └── index.html    # Single-page browser UI
+    └── index.html          # Single-page browser UI
 ```
 
 ---
@@ -114,6 +124,45 @@ python main.py
 ```
 
 The browser opens automatically at `http://localhost:8000`. Logs stream to stdout.
+
+---
+
+## Testing
+
+The test suite uses **pytest** with **WireMock** (via Testcontainers) to stub all external APIs. Docker must be running before executing tests.
+
+### Requirements
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+### Run
+
+```bash
+pytest --cov --cov-report=term-missing --cov-fail-under=95
+```
+
+If you're using **Colima** as your Docker runtime, export the socket path first:
+
+```bash
+export DOCKER_HOST=unix:///~/.colima/default/docker.sock
+export TESTCONTAINERS_RYUK_DISABLED=true
+pytest --cov --cov-report=term-missing --cov-fail-under=95
+```
+
+The suite runs 113 tests and reaches **~98% line coverage**. The WireMock container starts once per session and is shared across all API-dependent tests.
+
+---
+
+## CI pipeline
+
+The GitHub Actions pipeline (`.github/workflows/python-ci.yml`) runs on every push and pull request with two sequential jobs:
+
+| Job | Steps | Gate |
+|-|-|-|
+| `security` | `bandit` (SAST) + `pip-audit` (CVE scan) | blocks `test` if any finding |
+| `test` | `ruff` lint → `pytest --cov-fail-under=95` → upload `coverage.xml` to Codecov | fails PR if coverage drops below 95% |
 
 ---
 
