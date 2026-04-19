@@ -1,0 +1,52 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt bandit pip-audit
+
+      - name: SAST - bandit
+        run: bandit -r . --exclude .venv,tests -ll
+
+      - name: Dependency vulnerabilities - pip-audit
+        run: pip-audit -r requirements.txt
+
+  test:
+    runs-on: ubuntu-latest
+    needs: security
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test with coverage
+        run: pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=95
+        env:
+          AUDD_API_KEY: test-key
+          OPEN_BROWSER: "false"
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: coverage.xml
