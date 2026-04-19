@@ -90,13 +90,16 @@ def clean_wiremock(wiremock_base_url):
 
 
 @pytest.fixture
-def patch_api_urls(monkeypatch, wiremock_base_url):
+def patch_api_urls(monkeypatch, tmp_path, wiremock_base_url):
     """Route all external API calls through WireMock. Not autouse."""
     base = wiremock_base_url
     monkeypatch.setattr("src.recognizer.AUDD_URL", f"{base}/__audd__")
     monkeypatch.setattr("src.lyrics.LRCLIB_SEARCH_URL", f"{base}/__lrclib__")
+    monkeypatch.setattr("src.lyrics.LRCLIB_GET_URL", f"{base}/__lrclib_get__")
     monkeypatch.setattr("src.album_info.ITUNES_SEARCH_URL", f"{base}/__itunes__")
     monkeypatch.setattr("src.facts.WIKI_API_URL", f"{base}/__wiki__")
+    import src.lyrics as lyrics_mod
+    monkeypatch.setattr(lyrics_mod.config, "LYRICS_CACHE_DIR", str(tmp_path))
 
 
 # ---------------------------------------------------------------------------
