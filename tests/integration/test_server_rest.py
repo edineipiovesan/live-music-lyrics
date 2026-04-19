@@ -70,6 +70,34 @@ def test_recognize_now_with_loop_returns_triggered(test_client):
 
 
 # ---------------------------------------------------------------------------
+# POST /api/override
+# ---------------------------------------------------------------------------
+
+def test_override_sets_pending_recognition(test_client):
+    resp = test_client.post("/api/override", json={"artist": "The Beatles", "title": "Come Together"})
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "ok"
+    assert server.state["pending_recognition"]["title"] == "Come Together"
+    assert server.state["pending_recognition"]["artist"] == "The Beatles"
+    assert server.state["pending_recognition"]["timecode_s"] == 0.0
+
+
+def test_override_missing_artist_returns_422(test_client):
+    resp = test_client.post("/api/override", json={"title": "Come Together"})
+    assert resp.status_code == 422
+
+
+def test_override_missing_title_returns_422(test_client):
+    resp = test_client.post("/api/override", json={"artist": "The Beatles"})
+    assert resp.status_code == 422
+
+
+def test_override_empty_fields_returns_422(test_client):
+    resp = test_client.post("/api/override", json={"artist": "", "title": ""})
+    assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
 # GET /api/devices
 # ---------------------------------------------------------------------------
 

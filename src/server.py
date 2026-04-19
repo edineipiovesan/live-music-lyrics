@@ -110,6 +110,25 @@ async def recognize_now():
     return JSONResponse({"status": "triggered"})
 
 
+@app.post("/api/override")
+async def override_song(request: Request):
+    """Manually set the current song, bypassing audio fingerprinting."""
+    body = await request.json()
+    artist = str(body.get("artist", "")).strip()
+    title = str(body.get("title", "")).strip()
+    if not artist or not title:
+        raise HTTPException(status_code=422, detail="Both 'artist' and 'title' are required")
+    state["pending_recognition"] = {
+        "title": title,
+        "artist": artist,
+        "album": "",
+        "timecode_s": 0.0,
+        "ref_time": time.monotonic(),
+    }
+    log.info("Manual override: %r by %r", title, artist)
+    return JSONResponse({"status": "ok", "title": title, "artist": artist})
+
+
 async def _apply_pending_recognition():
     """Check for new recognition result and update state (runs async-safe)."""
     pending = state.get("pending_recognition")

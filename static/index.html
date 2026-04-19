@@ -542,6 +542,75 @@
       white-space: nowrap;
     }
     #rate-limit-banner.visible { display: block; }
+
+    /* ── Search / override modal ── */
+    #search-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    #search-overlay.visible { display: flex; }
+
+    #search-modal {
+      background: #1a1a1a;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 360px;
+      max-width: 90vw;
+    }
+    #search-modal h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .search-field { margin-bottom: 14px; }
+    .search-field label {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 6px;
+    }
+    .search-field input {
+      width: 100%;
+      padding: 9px 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-field input:focus { border-color: rgba(255,255,255,0.35); }
+    #search-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .search-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #btn-search-cancel { background: transparent; color: rgba(255,255,255,0.5); }
+    #btn-search-cancel:hover { background: rgba(255,255,255,0.07); }
+    #btn-search-submit { background: rgba(255,255,255,0.12); color: #fff; }
+    #btn-search-submit:hover { background: rgba(255,255,255,0.22); }
   </style>
 </head>
 <body>
@@ -631,12 +700,37 @@
           </svg>
           Recognize now
         </button>
+        <button class="ctrl-btn" id="btn-search" title="Search for a song">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Search
+        </button>
       </div>
 
       <div id="lyrics-scroll">
         <div id="lyrics-inner"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Search / override modal -->
+  <div id="search-overlay">
+    <div id="search-modal">
+      <h3>Search for a song</h3>
+      <div class="search-field">
+        <label for="input-artist">Artist</label>
+        <input id="input-artist" type="text" placeholder="e.g. The Beatles" autocomplete="off" />
+      </div>
+      <div class="search-field">
+        <label for="input-title">Title</label>
+        <input id="input-title" type="text" placeholder="e.g. Come Together" autocomplete="off" />
+      </div>
+      <div id="search-actions">
+        <button class="search-btn" id="btn-search-cancel">Cancel</button>
+        <button class="search-btn" id="btn-search-submit">Load lyrics</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -940,6 +1034,48 @@
       } catch (_) {}
       // Keep loading state for 3s so user has visual feedback that it's working
       setTimeout(() => btn.classList.remove('loading'), 3000);
+    });
+
+    /* ── Search / override modal ── */
+    const searchOverlayEl = document.getElementById('search-overlay');
+    const inputArtist     = document.getElementById('input-artist');
+    const inputTitle      = document.getElementById('input-title');
+
+    function openSearch() {
+      inputArtist.value = '';
+      inputTitle.value  = '';
+      searchOverlayEl.classList.add('visible');
+      inputArtist.focus();
+    }
+
+    function closeSearch() {
+      searchOverlayEl.classList.remove('visible');
+    }
+
+    document.getElementById('btn-search').addEventListener('click', openSearch);
+    document.getElementById('btn-search-cancel').addEventListener('click', closeSearch);
+    searchOverlayEl.addEventListener('click', e => { if (e.target === searchOverlayEl) closeSearch(); });
+
+    document.getElementById('btn-search-submit').addEventListener('click', async () => {
+      const artist = inputArtist.value.trim();
+      const title  = inputTitle.value.trim();
+      if (!artist || !title) return;
+      closeSearch();
+      try {
+        await fetch('/api/override', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artist, title }),
+        });
+      } catch (_) {}
+    });
+
+    // Submit on Enter in either field
+    [inputArtist, inputTitle].forEach(el => {
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('btn-search-submit').click();
+        if (e.key === 'Escape') closeSearch();
+      });
     });
 
     /* ── History ── */
