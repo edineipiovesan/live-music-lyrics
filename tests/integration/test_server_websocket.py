@@ -114,6 +114,27 @@ def test_websocket_disconnect_handled_cleanly(test_client):
         # disconnect by exiting context — should not raise
 
 
+def test_multiple_clients_connect_simultaneously(test_client):
+    """Two clients can connect without either being dropped."""
+    import src.server as srv
+    with test_client.websocket_connect("/ws") as ws1, \
+         test_client.websocket_connect("/ws") as ws2:
+        data1 = json.loads(ws1.receive_text())
+        data2 = json.loads(ws2.receive_text())
+        assert len(srv._ws_clients) == 2
+    assert "lineIndex" in data1
+    assert "lineIndex" in data2
+
+
+def test_client_removed_from_set_on_disconnect(test_client):
+    import src.server as srv
+    with test_client.websocket_connect("/ws") as ws:
+        ws.receive_text()
+    assert test_client.websocket_connect  # sanity
+    # After context exit the client should be gone
+    assert len(srv._ws_clients) == 0
+
+
 # ---------------------------------------------------------------------------
 # Tests that require WireMock (patch_api_urls + clean_wiremock)
 # ---------------------------------------------------------------------------

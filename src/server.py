@@ -51,6 +51,9 @@ HISTORY_MAX = config.HISTORY_MAX
 # Reference kept so main.py can pass it to AudioCapture.start()
 audio_capture = None
 
+# All currently connected WebSocket clients
+_ws_clients: set[WebSocket] = set()
+
 
 @app.get("/")
 async def index():
@@ -168,8 +171,9 @@ async def _apply_pending_recognition():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    _ws_clients.add(websocket)
     client = websocket.client
-    log.info("WebSocket connected: %s", client)
+    log.info("WebSocket connected: %s (%d total)", client, len(_ws_clients))
     try:
         while True:
             await _apply_pending_recognition()
@@ -201,3 +205,6 @@ async def websocket_endpoint(websocket: WebSocket):
             await asyncio.sleep(0.5)
     except WebSocketDisconnect:
         log.info("WebSocket disconnected: %s", client)
+    finally:
+        _ws_clients.discard(websocket)
+        log.info("WebSocket removed: %s (%d remaining)", client, len(_ws_clients))
