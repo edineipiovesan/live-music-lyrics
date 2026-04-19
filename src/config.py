@@ -54,7 +54,7 @@ def _bool(key: str, default: bool) -> bool:
 AUDD_API_KEY = _str("AUDD_API_KEY", "")
 
 # ── Server ────────────────────────────────────────────────────────────────────
-HOST         = _str("HOST", "0.0.0.0")
+HOST         = _str("HOST", "0.0.0.0")  # nosec B104 — intentional, overridable via env
 PORT         = _int("PORT", 8000)
 LOG_LEVEL    = _str("LOG_LEVEL", "INFO").upper()
 OPEN_BROWSER = _bool("OPEN_BROWSER", True)
